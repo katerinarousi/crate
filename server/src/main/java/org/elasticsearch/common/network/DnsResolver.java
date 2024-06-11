@@ -19,36 +19,20 @@
  * software solely pursuant to the terms of the relevant commercial agreement.
  */
 
-package io.crate.integrationtests;
+package org.elasticsearch.common.network;
 
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublishers;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
-import io.crate.common.Hex;
-import io.crate.test.utils.Blobs;
+public interface DnsResolver {
 
-class BlobHttpClient {
+    public static final DnsResolver SYSTEM = new DnsResolver() {
 
-    private final InetSocketAddress address;
-
-    BlobHttpClient(InetSocketAddress address) {
-        this.address = address;
-    }
-
-    public HttpResponse<String> put(String table, String body) throws Exception {
-        try (var httpClient = HttpClient.newHttpClient()) {
-            String digest = Hex.encodeHexString(Blobs.digest(body));
-            URI uri = Blobs.url(false, address, table + "/" + digest);
-            HttpRequest request = HttpRequest.newBuilder(uri)
-                .PUT(BodyPublishers.ofString(body))
-                .build();
-
-            return httpClient.send(request, BodyHandlers.ofString());
+        @Override
+        public InetAddress[] resolve(String host) throws UnknownHostException {
+            return InetAddress.getAllByName(host);
         }
-    }
+    };
+
+    InetAddress[] resolve(String host) throws UnknownHostException;
 }
